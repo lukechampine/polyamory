@@ -5,10 +5,10 @@ Hello World is too simple. Project Euler is too mathematical. So instead, I have
 
 | language   | status      |
 |------------|-------------|
-| C          | Not started |
+| C          | Complete    |
+| Perl       | In progress |
 | JavaScript | Not started |
 | Go         | Not started |
-| Perl       | Not started |
 | Haskell    | Not started |
 
 Brainfuck specification
