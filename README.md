@@ -6,9 +6,9 @@ Hello World is too simple. Project Euler is too mathematical. So instead, I have
 | language   | status      |
 |------------|-------------|
 | C          | Complete    |
-| Perl       | In progress |
+| Perl       | Complete    |
+| Go         | In progress |
 | JavaScript | Not started |
-| Go         | Not started |
 | Haskell    | Not started |
 
 Brainfuck specification
