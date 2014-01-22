@@ -1,7 +1,10 @@
-all: c perl
+all: c go perl
 
 c:
 	@${CC} -o brainfuck-c brainfuck.c
+
+go:
+	@go build -o brainfuck-go brainfuck.go
 
 perl:
 	@cp brainfuck.pl brainfuck-perl

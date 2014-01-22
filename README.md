@@ -7,8 +7,8 @@ Hello World is too simple. Project Euler is too mathematical. So instead, I have
 |------------|-------------|
 | C          | Complete    |
 | Perl       | Complete    |
-| Go         | In progress |
-| JavaScript | Not started |
+| Go         | Complete    |
+| JavaScript | In progress |
 | Haskell    | Not started |
 
 Brainfuck specification
