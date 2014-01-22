@@ -45,3 +45,15 @@ Additional rules
 - Interpreters must be able to detect unmatched brackets and display an error message.
 - If feasible, the interpreter should have some mechanism for detecting infinite loops (e.g. a timeout).
 
+Benchmarks
+----------
+Each implementation is benchmarked by calculating all the primes under 100, using the prime number calculator found [here](http://esoteric.sange.fi/brainfuck/bf-source/prog/PRIME.BF).
+
+| implementation | time       |
+|:---------------|-----------:|
+| Perl (BF-to-C) | 0.120s     |
+| Go             | 1.216s     |
+| C              | 1.528s     |
+| Perl           | 1m13.745s  |
+| Perl (obfu)    | 13m11.227s |
+
