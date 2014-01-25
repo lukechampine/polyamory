@@ -12,55 +12,30 @@ var pointer int
 var program string
 var bracketLookup map[int]int
 
-// simple LIFO stack, used for bracketMatch
-type Node struct {
-	value int
-	next  *Node
-}
-
-type Stack struct {
-	top  *Node
-	size int
-}
-
-func (s *Stack) Push(value int) {
-	s.top = &Node{value, s.top}
-	s.size++
-}
-
-func (s *Stack) Pop() int {
-	value := s.top.value
-	s.top = s.top.next
-	s.size--
-	return value
-}
-
 // report error and exit
 func die(err string) {
 	fmt.Printf("Error: %s\n", err)
 	os.Exit(0)
 }
 
-func bracketMatch() {
-	bracketLookup = make(map[int]int)
-	stack := new(Stack)
-	for i, c := range program {
-		switch c {
+func bracketMatch(pos, open int) int {
+	for i := pos; i < len(program); i++ {
+		switch program[i] {
 		case '[':
-			stack.Push(i)
+			i = bracketMatch(i+1, i)
 		case ']':
-			if stack.size == 0 {
+			if open == -1 {
 				die("unmatched ]")
 			}
-			j := stack.Pop()
-			bracketLookup[i] = j
-			bracketLookup[j] = i
-
+			bracketLookup[open] = i
+			bracketLookup[i] = open
+			return i
 		}
 	}
-	if stack.size != 0 {
+	if open != -1 {
 		die("unmatched [")
 	}
+	return 0
 }
 
 func interpret() {
@@ -105,7 +80,8 @@ func main() {
 	// initialize array
 	array = make([]byte, 512)
 	// check brackets and create lookup map
-	bracketMatch()
+	bracketLookup = make(map[int]int)
+	_ = bracketMatch(0, -1)
 	// interpret
 	interpret()
 }
