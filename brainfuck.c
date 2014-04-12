@@ -61,7 +61,7 @@ int interpret() {
 
 int main() {
 	/* read stdin into program string */
-	program = calloc(512, 1);
+	program = calloc(1, 1);
 	unsigned char buffer[80];
 	while (fgets(buffer, 80, stdin)) {
 		program = realloc(program, strlen(program) + strlen(buffer) + 1);
