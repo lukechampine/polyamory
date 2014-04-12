@@ -8,8 +8,8 @@ Hello World is too simple. Project Euler is too mathematical. So instead, I have
 | C          | Complete    |
 | Perl       | Complete    |
 | Go         | Complete    |
-| JavaScript | In progress |
-| Haskell    | Not started |
+| Haskell    | In progress |
+| JavaScript | Not started |
 
 Brainfuck specification
 -----------------------
@@ -42,8 +42,8 @@ The original language specification left a lot unspecified, so the following rul
 Additional rules
 ----------------
 - The interpreter must read from STDIN.
-- Interpreters must be able to detect unmatched brackets and display an error message.
-- If feasible, the interpreter should have some mechanism for detecting infinite loops (e.g. a timeout).
+- The interpreter must be able to detect unmatched brackets and display an error message.
+- The interpreter must be able to detect out-of-bounds errors (that is, a negative array pointer).
 
 Benchmarks
 ----------
