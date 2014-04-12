@@ -9,13 +9,13 @@ import (
 // global vars
 var array []byte
 var pointer int
-var program string
+var program []byte
 var bracketLookup map[int]int
 
 // report error and exit
 func die(err string) {
 	fmt.Printf("Error: %s\n", err)
-	os.Exit(0)
+	os.Exit(1)
 }
 
 func bracketMatch(pos, open int) int {
@@ -75,8 +75,7 @@ func interpret() {
 
 func main() {
 	// read stdin into program string
-	in, _ := ioutil.ReadAll(os.Stdin)
-	program = string(in)
+	program, _ = ioutil.ReadAll(os.Stdin)
 	// initialize array
 	array = make([]byte, 512)
 	// check brackets and create lookup map
