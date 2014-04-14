@@ -7,7 +7,7 @@ data BF = BF { program :: String
              }
 
 newBF :: String -> BF
-newBF prog = BF {program = prog, prgpointer = 0, array = replicate 30000 '\0', pointer = 0}
+newBF prog = BF {program = prog, prgpointer = 0, array = repeat '\0', pointer = 0}
 
 curSym :: BF -> Maybe Char
 curSym bf
