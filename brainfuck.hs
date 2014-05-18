@@ -71,7 +71,9 @@ interpret bf =
 	then return ()
 	else case curSym bf of
 		'>' -> interpret . advProg $ advArray bf
-		'<' -> interpret . advProg $ recArray bf
+		'<' -> if null . left . array $ bf
+			then putStr "Error: out of bounds" >> return ()
+			else interpret . advProg $ recArray bf
 		'+' -> interpret . advProg $ setCell (modChar (1) (curVal bf)) bf
 		'-' -> interpret . advProg $ setCell (modChar (-1) (curVal bf)) bf
 		'.' -> do
