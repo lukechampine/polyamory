@@ -1,70 +1,89 @@
 import Data.Char
 import System.IO (isEOF, hFlush, stdout)
 
-data BF = BF { program :: String
-             , prgpointer :: Int
-             , array :: [Char]
-             , pointer :: Int
+data Tape = Tape { left  :: [Char]
+                 , curr  ::  Char
+                 , right :: [Char]
+                 }
+
+advTape :: Tape -> Tape
+advTape (Tape ls c (r:rs)) = Tape (c:ls) r rs
+
+recTape :: Tape -> Tape
+recTape (Tape (l:ls) c rs) = Tape ls l (c:rs)
+
+data BF = BF { program :: Tape
+             , array   :: Tape
              }
 
 newBF :: String -> BF
-newBF prog = BF {program = prog, prgpointer = 0, array = repeat '\0', pointer = 0}
+newBF prog = BF (Tape [] (head prog) (tail prog)) (Tape [] '\0' (repeat '\0'))
 
-curSym :: BF -> Char
-curSym bf = program bf !! prgpointer bf
+curVal :: (BF -> Char)
+curVal = curr . array
 
-curVal :: BF -> Char
-curVal bf = array bf !! pointer bf
+curSym :: (BF -> Char)
+curSym = curr . program
 
-adv :: BF -> BF
-adv bf = bf {prgpointer = prgpointer bf + 1}
+advProg :: BF -> BF
+advProg bf = bf {program = advTape (program bf)}
 
-rec :: BF -> BF
-rec bf = bf {prgpointer = prgpointer bf - 1}
+recProg :: BF -> BF
+recProg bf = bf {program = recTape (program bf)}
+
+advArray :: BF -> BF
+advArray bf = bf {array = advTape (array bf)}
+
+recArray :: BF -> BF
+recArray bf = bf {array = recTape (array bf)}
 
 jump :: BF -> BF
 jump bf
-	| sym == '[' && val == '\0' = jmpTo ']' (adv bf)
-	| sym == ']' && val /= '\0' = jmpTo '[' (rec bf)
+	| sym == '[' && val == '\0' = bf {program = jmpR 0 . program $ bf}
+	| sym == ']' && val /= '\0' = bf {program = jmpL 0 . program $ bf}
 	| otherwise                 = bf
 	where
 		(sym, val) = (curSym bf, curVal bf)
 
-jmpTo :: Char -> BF -> BF
-jmpTo c bf
-	| curSym bf == (opp c) = jmpTo c . mov c . jmpTo c . mov c $ bf
-	| curSym bf == c       = bf
-	| otherwise            = jmpTo c . mov c $ bf
-	where
-		opp '[' = ']'; opp ']' = '['
-		mov '[' = rec; mov ']' = adv
+jmpR :: Int -> Tape -> Tape
+jmpR n tape = case (n, curr tape) of
+	(1, ']') -> tape
+	(_, ']') -> jmpR (n-1) (advTape tape)
+	(_, '[') -> jmpR (n+1) (advTape tape)
+	(_, _)   -> jmpR n (advTape tape)
+
+jmpL :: Int -> Tape -> Tape
+jmpL n tape = case (n, curr tape) of
+	(1, '[') -> tape
+	(_, '[') -> jmpL (n-1) (recTape tape)
+	(_, ']') -> jmpL (n+1) (recTape tape)
+	(_, _)   -> jmpL n (recTape tape)
 
 setCell :: Char -> BF -> BF
-setCell c bf = let (l,r) = splitAt (pointer bf) (array bf)
-               in bf {array = l ++ [c] ++ tail r}
+setCell c bf = bf {array = (array bf) {curr = c}}
 
 modChar :: Int -> (Char -> Char)
 modChar n = chr . (`mod` 256) . (+ n) . ord
 
 interpret :: BF -> IO ()
 interpret bf =
-	if prgpointer bf == length (program bf)
+	if null . right . program $ bf
 	then return ()
 	else case curSym bf of
-		'>' -> interpret . adv $ bf {pointer = pointer bf + 1}
-		'<' -> interpret . adv $ bf {pointer = pointer bf - 1}
-		'+' -> interpret . adv $ setCell (modChar (1) (curVal bf)) bf
-		'-' -> interpret . adv $ setCell (modChar (-1) (curVal bf)) bf
+		'>' -> interpret . advProg $ advArray bf
+		'<' -> interpret . advProg $ recArray bf
+		'+' -> interpret . advProg $ setCell (modChar (1) (curVal bf)) bf
+		'-' -> interpret . advProg $ setCell (modChar (-1) (curVal bf)) bf
 		'.' -> do
 			putChar . curVal $ bf
 			hFlush stdout
-			interpret . adv $ bf
+			interpret . advProg $ bf
 		',' -> do
 			c <- getChar
-			interpret . adv $ setCell c bf
-		'[' -> interpret . adv $ jump bf
-		']' -> interpret . adv $ jump bf
-		_   -> interpret . adv $ bf
+			interpret . advProg $ setCell c bf
+		'[' -> interpret . advProg $ jump bf
+		']' -> interpret . advProg $ jump bf
+		_   -> interpret . advProg $ bf
 
 readBF :: String -> IO String
 readBF s = do
