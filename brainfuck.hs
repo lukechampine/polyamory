@@ -12,87 +12,68 @@ advTape (Tape ls c (r:rs)) = Tape (c:ls) r rs
 recTape :: Tape -> Tape
 recTape (Tape (l:ls) c rs) = Tape ls l (c:rs)
 
-data BF = BF { program :: Tape
-             , array   :: Tape
-             }
+modChar :: Tape -> (Int -> Int) -> Tape
+modChar tape f = tape{curr = chr . (`mod` 256) . f . ord $ curr tape}
 
-newBF :: String -> BF
-newBF prog = BF (Tape [] (head prog) (tail prog)) (Tape [] '\0' (repeat '\0'))
+advance :: Tape -> Tape -> IO ()
+advance (Tape _ _ []) _ = return ()
+advance program array = interpret (advTape program) array
 
-curVal :: (BF -> Char)
-curVal = curr . array
+interpret :: Tape -> Tape -> IO ()
+interpret program@(Tape _ '>' _) array = advance program (advTape array)
 
-curSym :: (BF -> Char)
-curSym = curr . program
+interpret program@(Tape _ '<' _) array
+	| null (left array) = putStr "Error: out of bounds"
+	| otherwise         = advance program (recTape array)
 
-advProg :: BF -> BF
-advProg bf = bf {program = advTape (program bf)}
+interpret program@(Tape _ '+' _) array = advance program (modChar array succ)
 
-recProg :: BF -> BF
-recProg bf = bf {program = recTape (program bf)}
+interpret program@(Tape _ '-' _) array = advance program (modChar array pred)
 
-advArray :: BF -> BF
-advArray bf = bf {array = advTape (array bf)}
+interpret program@(Tape _ '.' _) array = do
+	putChar (curr array)
+	hFlush stdout
+	advance program array
 
-recArray :: BF -> BF
-recArray bf = bf {array = recTape (array bf)}
-
-jump :: BF -> BF
-jump bf
-	| sym == '[' && val == '\0' = bf {program = jmpR 0 . program $ bf}
-	| sym == ']' && val /= '\0' = bf {program = jmpL 0 . program $ bf}
-	| otherwise                 = bf
-	where
-		(sym, val) = (curSym bf, curVal bf)
-
-jmpR :: Int -> Tape -> Tape
-jmpR n tape = case (n, curr tape) of
-	(1, ']') -> tape
-	(_, ']') -> jmpR (n-1) (advTape tape)
-	(_, '[') -> jmpR (n+1) (advTape tape)
-	(_, _)   -> jmpR n (advTape tape)
-
-jmpL :: Int -> Tape -> Tape
-jmpL n tape = case (n, curr tape) of
-	(1, '[') -> tape
-	(_, '[') -> jmpL (n-1) (recTape tape)
-	(_, ']') -> jmpL (n+1) (recTape tape)
-	(_, _)   -> jmpL n (recTape tape)
-
-setCell :: Char -> BF -> BF
-setCell c bf = bf {array = (array bf) {curr = c}}
-
-modChar :: Int -> (Char -> Char)
-modChar n = chr . (`mod` 256) . (+ n) . ord
-
-interpret :: BF -> IO ()
-interpret bf =
-	if null . right . program $ bf
-	then return ()
-	else case curSym bf of
-		'>' -> interpret . advProg $ advArray bf
-		'<' -> if null . left . array $ bf
-			then putStr "Error: out of bounds" >> return ()
-			else interpret . advProg $ recArray bf
-		'+' -> interpret . advProg $ setCell (modChar (1) (curVal bf)) bf
-		'-' -> interpret . advProg $ setCell (modChar (-1) (curVal bf)) bf
-		'.' -> do
-			putChar . curVal $ bf
-			hFlush stdout
-			interpret . advProg $ bf
-		',' -> do
-			c <- getChar
-			interpret . advProg $ setCell c bf
-		'[' -> interpret . advProg $ jump bf
-		']' -> interpret . advProg $ jump bf
-		_   -> interpret . advProg $ bf
-
-readBF :: String -> IO String
-readBF s = do
+interpret program@(Tape _ ',' _) array = do
 	eof <- isEOF
 	if eof
-	then return s
-	else getChar >>= \c -> readBF . (s ++) $ [c]
+	then advance program array
+	else getChar >>= \c -> advance program array{curr = c}
+
+interpret program@(Tape _ '[' _) array
+	| curr array == '\0' = seek program array 0
+	| otherwise          = advance program array
+	where seek program@(Tape _ c r) array n
+		| c == ']' && n == 1 = advance program array
+		| c == ']'           = seek (advTape program) array (n-1)
+		| c == '['           = seek (advTape program) array (n+1)
+		| null r             = putStr "Error: unmatched ["
+		| otherwise          = seek (advTape program) array n
+
+interpret program@(Tape _ ']' _) array
+	| curr array /= '\0' = seek program array 0
+	| otherwise          = advance program array
+	where seek program@(Tape l c _) array n
+		| c == '[' && n == 1 = advance program array
+		| c == '['           = seek (recTape program) array (n-1)
+		| c == ']'           = seek (recTape program) array (n+1)
+		| null l             = putStr "Error: unmatched ]"
+		| otherwise          = seek (recTape program) array n
+
+interpret program array = advance program array
+
+readBF :: IO Tape
+readBF = readBF' (Tape [] '\0' []) where
+	readBF' tape@(Tape _ _ r) = do
+		eof <- isEOF
+		if eof
+		then return tape
+		else getLine >>= \ln -> readBF' tape{right = r ++ ln}
 
 main :: IO ()
-main = readBF "" >>= interpret . newBF >> putChar '\n'
+main = do
+	program <- readBF
+	let array = Tape [] '\0' (repeat '\0')
+	interpret program array
+	putChar '\n'
