@@ -8,7 +8,7 @@ Hello World is too simple. Project Euler is too mathematical. So instead, I have
 | C          | Complete    |
 | Perl       | Complete    |
 | Go         | Complete    |
-| Haskell    | In progress |
+| Haskell    | Complete    |
 | JavaScript | Not started |
 
 Brainfuck specification
@@ -33,7 +33,7 @@ Implementation details
 ----------------------
 The original language specification left a lot unspecified, so the following rules will be adopted:
 - Non-command characters are ignored.
-- The array size is dynamic ("infinite").
+- The array size is dynamic ("infinite"), but only extends to the right.
 - Array cells are represented as bytes.
 - Cells wrap around (255 + 1 = 0, and 0 - 1 = 255).
 - The end-of-line code is ASCII 10, `\n`.
@@ -41,7 +41,7 @@ The original language specification left a lot unspecified, so the following rul
 
 Additional rules
 ----------------
-- The interpreter must read from STDIN.
+- The interpreter must read from stdin and print to stdout.
 - The interpreter must be able to detect unmatched brackets and display an error message.
 - The interpreter must be able to detect out-of-bounds errors (that is, a negative array pointer).
 
@@ -54,6 +54,7 @@ Each implementation is benchmarked by calculating all the primes under 100, usin
 | Perl (BF-to-C) | 0.120s     |
 | Go             | 1.216s     |
 | C              | 1.528s     |
+| Haskell        | 5.316s     |
 | Perl           | 1m13.745s  |
 | Perl (obfu)    | 13m11.227s |
 
